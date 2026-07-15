@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SK. Rakinul Haque — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --neon:#00ff88;
+    --neon2:#00ccff;
+    --bg:#050810;
+    --panel:rgba(10,20,30,0.7);
+    --text:#e8f4f0;
+  }
+  html,body { background:var(--bg); color:var(--text); font-family:'Space Grotesk',sans-serif; overflow-x:hidden; scroll-behavior:smooth;}
+  a { color:var(--neon); text-decoration:none;}
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-track{background:#0a0f18;} ::-webkit-scrollbar-thumb{background:var(--neon);border-radius:4px;}
+
+  /* ---------- BOOT SCREEN ---------- */
+  #boot {
+    position:fixed; inset:0; background:#000; z-index:9999;
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    font-family:'JetBrains Mono',monospace; color:var(--neon);
+    padding:2rem; transition:opacity 1s;
+  }
+  #boot .terminal { width:min(700px,90vw); font-size:14px; line-height:1.8;}
+  #boot .cursor { display:inline-block; width:8px; height:16px; background:var(--neon); animation:blink 1s infinite; vertical-align:middle;}
+  @keyframes blink { 50%{opacity:0;} }
+  #boot .bar { width:100%; height:4px; background:#111; margin-top:20px; border:1px solid var(--neon); overflow:hidden;}
+  #boot .fill { height:100%; width:0; background:var(--neon); box-shadow:0 0 10px var(--neon); transition:width .3s;}
+  #enterBtn { margin-top:30px; padding:12px 30px; background:transparent; border:1px solid var(--neon); color:var(--neon); font-family:inherit; cursor:pointer; font-size:14px; letter-spacing:2px; display:none; transition:.3s;}
+  #enterBtn:hover { background:var(--neon); color:#000; box-shadow:0 0 30px var(--neon);}
+
+  /* ---------- PARTICLE CANVAS ---------- */
+  #particles { position:fixed; inset:0; z-index:0; pointer-events:none;}
+
+  /* ---------- NAV ---------- */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:20px 40px; backdrop-filter:blur(20px);
+    background:rgba(5,8,16,0.5); border-bottom:1px solid rgba(0,255,136,0.1);
+  }
+  nav .logo { font-family:'JetBrains Mono',monospace; color:var(--neon); font-weight:700;}
+  nav ul { display:flex; gap:30px; list-style:none;}
+  nav ul a { color:var(--text); font-size:14px; transition:.3s; position:relative;}
+  nav ul a:hover { color:var(--neon);}
+  nav ul a::after { content:''; position:absolute; bottom:-5px; left:0; width:0; height:1px; background:var(--neon); transition:.3s;}
+  nav ul a:hover::after { width:100%;}
+
+  /* ---------- HERO ---------- */
+  #hero { min-height:100vh; display:flex; align-items:center; padding:0 8vw; position:relative; z-index:2;}
+  .hero-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:60px; align-items:center; width:100%;}
+  .hero-left h1 {
+    font-size:clamp(2.5rem,6vw,5.5rem); font-weight:700; line-height:1.05;
+    background:linear-gradient(90deg,#fff 0%,var(--neon) 50%,var(--neon2) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:-2px;
+  }
+  .hero-left .sub { font-family:'JetBrains Mono',monospace; color:var(--neon); margin-top:20px; font-size:1.1rem; min-height:1.5em;}
+  .hero-left p.tag { margin-top:25px; color:#aab; max-width:500px; line-height:1.7;}
+  .hero-cta { margin-top:40px; display:flex; gap:20px; flex-wrap:wrap;}
+  .btn { padding:14px 28px; border:1px solid var(--neon); color:var(--neon); font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1px; cursor:pointer; background:transparent; transition:.3s; text-transform:uppercase;}
+  .btn:hover { background:var(--neon); color:#000; box-shadow:0 0 30px var(--neon);}
+  .btn.filled { background:var(--neon); color:#000;}
+  .btn.filled:hover { background:transparent; color:var(--neon);}
+
+  .hero-right { position:relative; display:flex; justify-content:center;}
+  .avatar-frame {
+    position:relative; width:min(380px,90%); aspect-ratio:3/4;
+    border:2px solid var(--neon); overflow:hidden;
+    clip-path:polygon(0 0, 100% 0, 100% 85%, 85% 100%, 0 100%);
+    box-shadow:0 0 60px rgba(0,255,136,0.3);
+  }
+  .avatar-frame::before {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg,transparent 0%,rgba(0,255,136,0.15) 100%);
+    z-index:2;
+  }
+  .avatar-frame::after {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:var(--neon); box-shadow:0 0 20px var(--neon);
+    animation:scan 3s infinite;
+  }
+  @keyframes scan { 0%,100%{top:0;} 50%{top:100%;} }
+  .avatar-frame img { width:100%; height:100%; object-fit:cover; filter:contrast(1.1) saturate(1.2); transition:transform .6s ease, filter .4s ease;}
+  /* Flux transform: subtle neon / color-shift + glow */
+  .flux-1-kontext-pro {
+    mix-blend-mode: screen;
+    filter: sepia(.06) hue-rotate(80deg) saturate(1.45) contrast(1.05) drop-shadow(0 8px 30px rgba(0,255,136,0.12));
+    transform: scale(1.02) translateZ(0);
+  }
+  .avatar-frame:hover .flux-1-kontext-pro { transform: scale(1.04) rotate(-0.5deg); filter: sepia(.02) hue-rotate(60deg) saturate(1.7) contrast(1.08) drop-shadow(0 14px 40px rgba(0,255,136,0.18)); }
+  .corner-tag { position:absolute; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--neon); z-index:3;}
+  .corner-tag.tl { top:10px; left:10px;}
+  .corner-tag.br { bottom:15px; right:20px;}
+
+  /* ---------- SECTIONS ---------- */
+  section.block { padding:120px 8vw; position:relative; z-index:2;}
+  .section-title { font-size:clamp(2rem,4vw,3.5rem); font-weight:700; margin-bottom:60px; display:flex; align-items:center; gap:20px;}
+  .section-title::before { content:''; width:40px; height:2px; background:var(--neon);}
+  .section-title span { color:var(--neon); font-family:'JetBrains Mono',monospace; font-size:0.5em;}
+
+  /* ---------- 3D VIEWER ---------- */
+  #viewer-wrap { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;}
+  #three-canvas { width:100%; height:500px; background:radial-gradient(circle at center, rgba(0,255,136,0.05), transparent); border:1px solid rgba(0,255,136,0.2); cursor:grab;}
+  #three-canvas:active { cursor:grabbing;}
+  .viewer-info h3 { font-size:1.8rem; margin-bottom:20px;}
+  .viewer-info p { color:#aab; line-height:1.8; margin-bottom:15px;}
+  .viewer-controls { margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;}
+  .chip { padding:8px 14px; background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.3); color:var(--neon); font-family:'JetBrains Mono',monospace; font-size:12px; cursor:pointer; transition:.3s;}
+  .chip:hover, .chip.active { background:var(--neon); color:#000;}
+
+  /* ---------- EXPERIENCE / TIMELINE ---------- */
+  .timeline { position:relative; padding-left:40px; border-left:1px solid rgba(0,255,136,0.3);}
+  .tl-item { margin-bottom:50px; position:relative;}
+  .tl-item::before { content:''; position:absolute; left:-48px; top:5px; width:16px; height:16px; background:var(--bg); border:2px solid var(--neon); border-radius:50%; box-shadow:0 0 15px var(--neon);}
+  .tl-date { font-family:'JetBrains Mono',monospace; color:var(--neon); font-size:12px;}
+  .tl-item h3 { font-size:1.4rem; margin:8px 0 4px;}
+  .tl-item .role { color:var(--neon2); font-size:0.95rem; margin-bottom:10px;}
+  .tl-item ul { list-style:none; padding-left:0;}
+  .tl-item ul li { color:#bcc; padding:6px 0; padding-left:20px; position:relative; line-height:1.6;}
+  .tl-item ul li::before { content:'▸'; position:absolute; left:0; color:var(--neon);}
+
+  /* ---------- PROJECTS GRID ---------- */
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:25px;}
+  .card { background:var(--panel); border:1px solid rgba(0,255,136,0.15); padding:30px; transition:.3s; position:relative; overflow:hidden; backdrop-filter:blur(10px);}
+  .card::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:2px; background:var(--neon); transition:.5s;}
+  .card:hover::before { left:0;}
+  .card:hover { transform:translateY(-5px); border-color:var(--neon); box-shadow:0 20px 40px rgba(0,255,136,0.1);}
+  .card h4 { color:var(--neon); font-size:1.2rem; margin-bottom:5px;}
+  .card .meta { font-family:'JetBrains Mono',monospace; font-size:11px; color:#788; margin-bottom:15px;}
+  .card p, .card li { color:#bcc; line-height:1.6; font-size:0.95rem;}
+  .card ul { list-style:none; margin-top:10px;}
+  .card ul li { padding:4px 0; padding-left:15px; position:relative;}
+  .card ul li::before { content:'›'; position:absolute; left:0; color:var(--neon);}
+
+  /* ---------- SKILLS GRID ---------- */
+  .skill-cat { margin-bottom:30px;}
+  .skill-cat h4 { color:var(--neon2); font-family:'JetBrains Mono',monospace; margin-bottom:12px; font-size:0.95rem;}
+  .skill-tags { display:flex; flex-wrap:wrap; gap:10px;}
+  .tag { padding:8px 16px; background:rgba(0,204,255,0.08); border:1px solid rgba(0,204,255,0.3); color:var(--neon2); font-size:13px; font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- MINI GAME ---------- */
+  #game-wrap { display:grid; grid-template-columns:1fr 300px; gap:30px;}
+  #game-canvas { width:100%; height:500px; background:#020608; border:1px solid var(--neon); display:block; cursor:crosshair;}
+  .game-side { display:flex; flex-direction:column; gap:15px;}
+  .game-panel { background:var(--panel); border:1px solid rgba(0,255,136,0.2); padding:20px; font-family:'JetBrains Mono',monospace;}
+  .game-panel .lbl { font-size:11px; color:#788; text-transform:uppercase; letter-spacing:1px;}
+  .game-panel .val { font-size:2rem; color:var(--neon); margin-top:5px;}
+  #startGame { padding:14px; background:var(--neon); color:#000; border:none; font-family:'JetBrains Mono',monospace; font-weight:700; cursor:pointer; letter-spacing:2px; transition:.3s;}
+  #startGame:hover { box-shadow:0 0 30px var(--neon);}
+
+  /* ---------- CONTACT ---------- */
+  #contact { text-align:center;}
+  #contact h2 { font-size:clamp(2.5rem,5vw,4rem); margin-bottom:20px;}
+  #contact p { color:#aab; max-width:600px; margin:0 auto 40px; line-height:1.7;}
+  .contact-links { display:flex; gap:20px; justify-content:center; flex-wrap:wrap;}
+
+  footer { padding:40px 8vw; text-align:center; border-top:1px solid rgba(0,255,136,0.1); color:#566; font-family:'JetBrains Mono',monospace; font-size:12px;}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:900px) {
+    .hero-grid, #viewer-wrap, #game-wrap { grid-template-columns:1fr;}
+    nav ul { display:none;}
+    nav { padding:15px 20px;}
+    section.block { padding:80px 6vw;}
+  }
+
+  .reveal { opacity:0; transform:translateY(30px); transition:1s;}
+  .reveal.on { opacity:1; transform:none;}
+</style>
+</head>
+<body>
+
+<!-- BOOT SEQUENCE -->
+<div id="boot">
+  <div class="terminal" id="term"></div>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <button id="enterBtn">▶ ENTER PORTFOLIO</button>
+</div>
+
+<canvas id="particles"></canvas>
+
+<nav>
+  <div class="logo">&gt; rakinul.sh</div>
+  <ul>
+    <li><a href="#hero">home</a></li>
+    <li><a href="#viewer">3d</a></li>
+    <li><a href="#experience">experience</a></li>
+    <li><a href="#projects">projects</a></li>
+    <li><a href="#game">game</a></li>
+    <li><a href="#contact">contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid">
+    <div class="hero-left">
+      <h1>SK. Rakinul<br/>Haque</h1>
+      <div class="sub" id="typed"></div>
+      <p class="tag">Computer Science &amp; Engineering student with hands-on technical support experience, including hardware and software troubleshooting, system diagnostics, and OS administration on Windows. Looking to build toward a full-time IT support career.</p>
+      <div class="hero-cta">
+        <a class="btn filled" href="#projects">View Projects</a>
+        <a class="btn" href="#contact">Contact Me</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="avatar-frame">
+        <span class="corner-tag tl">[ID: 0x404]</span>
+        <span class="corner-tag br">STATUS: ONLINE</span>
+        <img src="avatar.jpg" alt="Rakinul" id="avatarImg" class="flux-1-kontext-pro" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3D VIEWER -->
+<section id="viewer" class="block reveal">
+  <h2 class="section-title">Interactive 3D <span>// tech_stack.obj</span></h2>
+  <div id="viewer-wrap">
+    <canvas id="three-canvas"></canvas>
+    <div class="viewer-info">
+      <h3>Explore My Tech Stack</h3>
+      <p>A rotating 3D crystal representing my technical toolkit. Click and drag to orbit. Each face highlights a domain I work in — from networking to systems programming.</p>
+      <p>Built with <b>Three.js</b> and WebGL, this viewer is a live example of the kind of interactive experiences I love debugging.</p>
+      <div class="viewer-controls">
+        <div class="chip active" data-mode="cube">Cube</div>
+        <div class="chip" data-mode="sphere">Sphere</div>
+        <div class="chip" data-mode="torus">Torus</div>
+        <div class="chip" data-mode="wire">Wireframe</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience" class="block reveal">
+  <h2 class="section-title">Experience <span>// career.log</span></h2>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-date">2026 – Present</div>
+      <h3>FlyRank AI — Remote</h3>
+      <div class="role">Technical Support &amp; AI Intern</div>
+      <ul>
+        <li>Evaluate AI platform performance and functionality, flagging bugs and contributing to fixes that support reliable day-to-day operations</li>
+        <li>Work with the technical team on support workflows, gaining direct exposure to how issues get tracked, prioritized, and resolved</li>
+      </ul>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2025 – Present</div>
+      <h3>JYGO — Dhaka, Bangladesh</h3>
+      <div class="role">Campus Ambassador</div>
+      <ul>
+        <li>Act as a first point of contact for students, answering questions and guiding peers through platform use — building the customer-facing communication skills central to support roles</li>
+        <li>Coordinate between company management and student clubs, communicating clearly across technical and non-technical audiences</li>
+      </ul>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2025 – Present</div>
+      <h3>Peer Academic Support &amp; Tutoring</h3>
+      <div class="role">Student Mentor — North South University</div>
+      <ul>
+        <li>Supported 4+ peers on programming and math fundamentals, breaking down technical concepts into clear, patient explanations</li>
+      </ul>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2025 – Present</div>
+      <h3>NSU CEC Club</h3>
+      <div class="role">Technical Volunteer</div>
+      <ul>
+        <li>Supported operations for a CTF competitive event and joined peer algorithmic problem-solving drills</li>
+      </ul>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">Cohort 3, 2026</div>
+      <h3>Aspire Leaders Program</h3>
+      <div class="role">Accepted Participant</div>
+      <ul>
+        <li>Selected as a participant in this competitive, invite-only global leadership development program</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section class="block reveal">
+  <h2 class="section-title">Technical Arsenal <span>// skills.json</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h4>Troubleshooting &amp; Support</h4>
+      <p class="meta">// core competency</p>
+      <div class="skill-tags">
+        <span class="tag">Hardware Diagnostics</span>
+        <span class="tag">Software Troubleshooting</span>
+        <span class="tag">OS Installation</span>
+        <span class="tag">Windows Admin</span>
+        <span class="tag">Issue Triage</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Platforms &amp; Productivity</h4>
+      <p class="meta">// daily drivers</p>
+      <div class="skill-tags">
+        <span class="tag">Windows 10/11</span>
+        <span class="tag">Office 365</span>
+        <span class="tag">Google Workspace</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Networking &amp; Infrastructure</h4>
+      <p class="meta">// packet level</p>
+      <div class="skill-tags">
+        <span class="tag">Cisco Packet Tracer</span>
+        <span class="tag">Router/Switch Config</span>
+        <span class="tag">Network Troubleshooting</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Programming &amp; Tools</h4>
+      <p class="meta">// code base</p>
+      <div class="skill-tags">
+        <span class="tag">C</span>
+        <span class="tag">Python</span>
+        <span class="tag">Java</span>
+        <span class="tag">HTML5</span>
+        <span class="tag">VS Code</span>
+        <span class="tag">Git</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Certifications</h4>
+      <p class="meta">// verified</p>
+      <ul>
+        <li>Cisco Networking Academy – Introduction to Networks</li>
+        <li>Claude Code 101 (Anthropic); Anthropic Certified Specialist</li>
+        <li>Generative AI &amp; Prompt Engineering (Grameenphone)</li>
+        <li>AI Workflows and Agents (Grameenphone)</li>
+        <li>AI Fluency: Framework &amp; Foundations (Grameenphone)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Core Competencies</h4>
+      <p class="meta">// soft skills</p>
+      <div class="skill-tags">
+        <span class="tag">Communication</span>
+        <span class="tag">Team Leadership</span>
+        <span class="tag">Problem Solving</span>
+        <span class="tag">Fast Learner</span>
+        <span class="tag">Attention to Detail</span>
+        <span class="tag">Critical Thinking</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects" class="block reveal">
+  <h2 class="section-title">Projects <span>// build_log</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h4>Cisco Packet Tracer Network Labs</h4>
+      <p class="meta">2025 – Present · Self-Directed</p>
+      <ul>
+        <li>Configure routers, switches, and endpoints to build and troubleshoot simulated office network infrastructures</li>
+        <li>Diagnose and resolve connectivity issues using IP subnetting, VLAN segmentation, and OSPF routing</li>
+        <li>Maintain diagnostic topology documentation — mirrors real IT support documentation practices</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Student Record Management System</h4>
+      <p class="meta">Spring 2025 · Group Project Lead · NSU</p>
+      <ul>
+        <li>Led a 3-person team building a C-based student records system; debugged performance and logic issues throughout</li>
+        <li>Delivered on deadline with zero critical bugs, earning a distinction grade</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Responsive Portfolio Website</h4>
+      <p class="meta">Fall 2025 · Web Dev Project · NSU</p>
+      <ul>
+        <li>Built a multi-page site using AI with HTML5, CSS3, and JavaScript; diagnosed and fixed cross-browser rendering issues</li>
+        <li>Built AI-assisted web project: Luxury Brick Store for Grameenphone Academy</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- MINI GAME -->
+<section id="game" class="block reveal">
+  <h2 class="section-title">Mini Game <span>// debug_the_network.exe</span></h2>
+  <p style="color:#aab; margin-bottom:30px; max-width:700px;">Bugs are flooding the network! Click them before they crash the system. Miss too many and it's game over. Move your mouse to aim.</p>
+  <div id="game-wrap">
+    <canvas id="game-canvas" width="800" height="500"></canvas>
+    <div class="game-side">
+      <div class="game-panel"><div class="lbl">Score</div><div class="val" id="score">0</div></div>
+      <div class="game-panel"><div class="lbl">Lives</div><div class="val" id="lives">3</div></div>
+      <div class="game-panel"><div class="lbl">Level</div><div class="val" id="level">1</div></div>
+      <button id="startGame">▶ START</button>
+      <div class="game-panel" style="font-size:11px; color:#788; line-height:1.6;">
+        <b style="color:var(--neon)">HOW TO PLAY</b><br/>
+        Click red bugs 🐛<br/>
+        Avoid blue packets 📦<br/>
+        Bugs speed up per level
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section class="block reveal">
+  <h2 class="section-title">Education <span>// academic.db</span></h2>
+  <div class="card" style="max-width:700px;">
+    <h4>North South University</h4>
+    <p class="meta">BSc, Computer Science &amp; Engineering · Expected 2029</p>
+    <p><b style="color:var(--neon2)">GPA:</b> 3.25 / 4.00</p>
+    <p style="margin-top:15px;"><b style="color:var(--neon2)">Languages:</b> Bengali (Native) · English (Intermediate — Academic reading, writing, technical documentation, professional communication)</p>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="block reveal">
+  <h2>Let's Connect</h2>
+  <p>Looking to build toward a full-time IT support career. Open to internships, entry-level roles, and collaborations. Let's talk.</p>
+  <div class="contact-links">
+    <a class="btn filled" href="mailto:rakinul.haque.253@northsouth.edu">📧 Email</a>
+    <a class="btn" href="https://www.linkedin.com/in/sk-rakinul-haque-a732283a1/" target="_blank" rel="noopener noreferrer">💼 LinkedIn</a>
+    <a class="btn" href="https://github.com/try-legendary" target="_blank" rel="noopener noreferrer">💻 GitHub</a>
+  </div>
+  <p style="margin-top:18px; font-family:'JetBrains Mono',monospace; color:#aab; font-size:13px;">Email: rakinul.haque.253@northsouth.edu</p>
+  <p style="margin-top:40px; font-family:'JetBrains Mono',monospace; color:var(--neon); font-size:14px;">📍 Dhaka, Bangladesh</p>
+</section>
+
+<footer>
+  <p>&gt; Built with cinematic intent · Three.js · Vanilla JS · &copy; 2026 SK. Rakinul Haque · North South University</p>
+</footer>
+
+<script>
+/* ============ BOOT SEQUENCE ============ */
+const bootLines = [
+  '> Initializing rakinul.portfolio.sys...',
+  '> Loading kernel modules... [OK]',
+  '> Mounting /skills... [OK]',
+  '> Establishing network connection...',
+  '> Verifying credentials [rakinul@nsu]...',
+  '> Compiling cinematic experience...',
+  '> Rendering 3D subsystems... [OK]',
+  '> Booting mini-game engine... [OK]',
+  '> READY.'
+];
+const term = document.getElementById('term');
+const fill = document.getElementById('fill');
+let li = 0;
+function bootStep(){
+  if(li < bootLines.length){
+    term.innerHTML += bootLines[li] + '<br/>';
+    fill.style.width = ((li+1)/bootLines.length*100) + '%';
+    li++;
+    setTimeout(bootStep, 250);
+  } else {
+    term.innerHTML += '<span class="cursor"></span>';
+    document.getElementById('enterBtn').style.display='block';
+  }
+}
+bootStep();
+document.getElementById('enterBtn').onclick = ()=>{
+  const b = document.getElementById('boot');
+  b.style.opacity=0;
+  setTimeout(()=>b.style.display='none', 1000);
+  startTyping();
+};
+
+/* ============ TYPEWRITER ============ */
+const words = ['IT Support Specialist','Network Troubleshooter','CSE Student @ NSU','Technical Support Intern','Cisco Certified'];
+let wi=0, ci=0, del=false;
+function startTyping(){
+  const el = document.getElementById('typed');
+  function tick(){
+    const w = words[wi];
+    if(!del){
+      el.textContent = w.substring(0,ci++) + '▊';
+      if(ci>w.length){ del=true; setTimeout(tick,1500); return;}
+    } else {
+      el.textContent = w.substring(0,ci--) + '▊';
+      if(ci<0){ del=false; wi=(wi+1)%words.length;}
+    }
+    setTimeout(tick, del?40:80);
+  }
+  tick();
+}
+
+/* ============ PARTICLE BG ============ */
+const pc = document.getElementById('particles'), pctx = pc.getContext('2d');
+let particles = [];
+function resizeP(){ pc.width=innerWidth; pc.height=innerHeight;}
+resizeP(); addEventListener('resize',resizeP);
+for(let i=0;i<80;i++) particles.push({x:Math.random()*pc.width,y:Math.random()*pc.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});
+function animP(){
+  pctx.clearRect(0,0,pc.width,pc.height);
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>pc.width) p.vx*=-1;
+    if(p.y<0||p.y>pc.height) p.vy*=-1;
+    pctx.fillStyle='rgba(0,255,136,0.4)';
+    pctx.beginPath(); pctx.arc(p.x,p.y,p.r,0,Math.PI*2); pctx.fill();
+  });
+  // connect
+  for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){
+    const a=particles[i],b=particles[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(d<120){ pctx.strokeStyle=`rgba(0,255,136,${.15*(1-d/120)})`; pctx.beginPath(); pctx.moveTo(a.x,a.y); pctx.lineTo(b.x,b.y); pctx.stroke();}
+  }
+  requestAnimationFrame(animP);
+}
+animP();
+
+/* ============ THREE.JS 3D VIEWER ============ */
+let scene, camera, renderer, mesh, currentGeo='cube', wire=false;
+function initThree(){
+  const canvas = document.getElementById('three-canvas');
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(60, w/h, .1, 1000);
+  camera.position.z = 4;
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setSize(w,h);
+  renderer.setPixelRatio(devicePixelRatio);
+
+  const light = new THREE.PointLight(0x00ff88, 2, 100);
+  light.position.set(5,5,5);
+  scene.add(light);
+  const light2 = new THREE.PointLight(0x00ccff, 1.5, 100);
+  light2.position.set(-5,-5,3);
+  scene.add(light2);
+  scene.add(new THREE.AmbientLight(0x223344,.5));
+
+  buildMesh();
+
+  // drag orbit
+  let dragging=false, px=0, py=0;
+  canvas.addEventListener('mousedown', e=>{dragging=true; px=e.clientX; py=e.clientY;});
+  addEventListener('mouseup', ()=>dragging=false);
+  addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const dx=e.clientX-px, dy=e.clientY-py;
+    if(mesh){ mesh.rotation.y += dx*.01; mesh.rotation.x += dy*.01;}
+    px=e.clientX; py=e.clientY;
+  });
+  addEventListener('resize', ()=>{
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    camera.aspect=w/h; camera.updateProjectionMatrix();
+    renderer.setSize(w,h);
+  });
+
+  animate();
+}
+function buildMesh(){
+  if(mesh) scene.remove(mesh);
+  let geo;
+  if(currentGeo==='cube') geo = new THREE.BoxGeometry(2,2,2,4,4,4);
+  else if(currentGeo==='sphere') geo = new THREE.IcosahedronGeometry(1.5, 1);
+  else geo = new THREE.TorusKnotGeometry(1,.35,100,16);
+  const mat = new THREE.MeshStandardMaterial({
+    color:0x00ff88, emissive:0x004422, metalness:.7, roughness:.2,
+    wireframe: wire
+  });
+  mesh = new THREE.Mesh(geo,mat);
+  scene.add(mesh);
+
+  // wire overlay
+  const edges = new THREE.EdgesGeometry(geo);
+  const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color:0x00ccff}));
+  mesh.add(line);
+}
+function animate(){
+  requestAnimationFrame(animate);
+  if(mesh){ mesh.rotation.y += .005; mesh.rotation.x += .002;}
+  renderer.render(scene,camera);
+}
+window.addEventListener('load',()=>setTimeout(initThree,100));
+
+document.querySelectorAll('.chip').forEach(c=>{
+  c.onclick = ()=>{
+    document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    const m = c.dataset.mode;
+    if(m==='wire'){ wire=!wire;} else { currentGeo=m; wire=false;}
+    buildMesh();
+  };
+});
+
+/* ============ MINI GAME ============ */
+const gc = document.getElementById('game-canvas'), gtx = gc.getContext('2d');
+let gameState = {running:false, score:0, lives:3, level:1, entities:[], mouseX:400, mouseY:250};
+gc.addEventListener('mousemove', e=>{
+  const r=gc.getBoundingClientRect();
+  gameState.mouseX = (e.clientX-r.left) * (gc.width/r.width);
+  gameState.mouseY = (e.clientY-r.top) * (gc.height/r.height);
+});
+gc.addEventListener('click', e=>{
+  if(!gameState.running) return;
+  const r=gc.getBoundingClientRect();
+  const x=(e.clientX-r.left)*(gc.width/r.width);
+  const y=(e.clientY-r.top)*(gc.height/r.height);
+  gameState.entities.forEach(en=>{
+    if(!en.hit && Math.hypot(en.x-x,en.y-y)<en.r+5){
+      en.hit=true;
+      if(en.type==='bug'){ gameState.score+=10;}
+      else { gameState.score=Math.max(0,gameState.score-15); gameState.lives--;}
+    }
+  });
+});
+document.getElementById('startGame').onclick = ()=>{
+  gameState={running:true, score:0, lives:3, level:1, entities:[], mouseX:400, mouseY:250};
+  spawnLoop();
+  gameLoop();
+};
+function spawnLoop(){
+  if(!gameState.running) return;
+  const type = Math.random()<.7?'bug':'packet';
+  const speed = 1 + gameState.level*.5 + Math.random()*2;
+  gameState.entities.push({
+    x: Math.random()*gc.width, y:-20, r: 15+Math.random()*10, vy:speed, type, hit:false
+  });
+  setTimeout(spawnLoop, Math.max(400, 1200 - gameState.level*100));
+}
+function gameLoop(){
+  if(!gameState.running) return;
+  gtx.fillStyle='rgba(2,6,8,0.2)';
+  gtx.fillRect(0,0,gc.width,gc.height);
+
+  // grid
+  gtx.strokeStyle='rgba(0,255,136,0.05)';
+  for(let i=0;i<gc.width;i+=40){ gtx.beginPath(); gtx.moveTo(i,0); gtx.lineTo(i,gc.height); gtx.stroke();}
+  for(let i=0;i<gc.height;i+=40){ gtx.beginPath(); gtx.moveTo(0,i); gtx.lineTo(gc.width,i); gtx.stroke();}
+
+  gameState.entities.forEach(en=>{
+    if(en.hit){ en.r *= .9; if(en.r<2) en.dead=true; return;}
+    en.y += en.vy;
+    if(en.y>gc.height+30){
+      if(en.type==='bug') gameState.lives--;
+      en.dead=true;
+    }
+    gtx.beginPath();
+    gtx.arc(en.x,en.y,en.r,0,Math.PI*2);
+    if(en.type==='bug'){
+      gtx.fillStyle='#ff3366'; gtx.fill();
+      gtx.fillStyle='#fff'; gtx.font='bold '+(en.r)+'px monospace';
+      gtx.textAlign='center'; gtx.textBaseline='middle';
+      gtx.fillText('B', en.x, en.y);
+    } else {
+      gtx.fillStyle='#00ccff'; gtx.fill();
+      gtx.fillStyle='#000'; gtx.font='bold '+(en.r)+'px monospace';
+      gtx.textAlign='center'; gtx.textBaseline='middle';
+      gtx.fillText('P', en.x, en.y);
+    }
+    gtx.strokeStyle='#fff'; gtx.lineWidth=1; gtx.stroke();
+  });
+  gameState.entities = gameState.entities.filter(e=>!e.dead);
+
+  // crosshair
+  gtx.strokeStyle='rgba(0,255,136,.6)'; gtx.lineWidth=1;
+  gtx.beginPath();
+  gtx.moveTo(gameState.mouseX-15,gameState.mouseY); gtx.lineTo(gameState.mouseX+15,gameState.mouseY);
+  gtx.moveTo(gameState.mouseX,gameState.mouseY-15); gtx.lineTo(gameState.mouseX,gameState.mouseY+15);
+  gtx.stroke();
+
+  document.getElementById('score').textContent = gameState.score;
+  document.getElementById('lives').textContent = Math.max(0,gameState.lives);
+  gameState.level = 1 + Math.floor(gameState.score/50);
+  document.getElementById('level').textContent = gameState.level;
+
+  if(gameState.lives<=0){
+    gameState.running=false;
+    gtx.fillStyle='rgba(0,0,0,0.8)';
+    gtx.fillRect(0,0,gc.width,gc.height);
+    gtx.fillStyle='#ff3366'; gtx.font='bold 48px monospace';
+    gtx.textAlign='center';
+    gtx.fillText('SYSTEM CRASH', gc.width/2, gc.height/2-20);
+    gtx.fillStyle='#00ff88'; gtx.font='20px monospace';
+    gtx.fillText('Final Score: '+gameState.score, gc.width/2, gc.height/2+20);
+    return;
+  }
+  requestAnimationFrame(gameLoop);
+}
+// idle screen
+gtx.fillStyle='#020608'; gtx.fillRect(0,0,gc.width,gc.height);
+gtx.fillStyle='#00ff88'; gtx.font='bold 32px monospace'; gtx.textAlign='center';
+gtx.fillText('DEBUG THE NETWORK', gc.width/2, gc.height/2-10);
+gtx.fillStyle='#788'; gtx.font='14px monospace';
+gtx.fillText('Press START to begin', gc.width/2, gc.height/2+20);
+
+/* ============ REVEAL ON SCROLL ============ */
+const io = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('on');});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(r=>io.observe(r));
+
+/* Avatar fallback with initials */
+const img = document.getElementById('avatarImg');
+img.onerror = function(){
+  const frame = this.parentElement;
+  this.remove();
+  const div = document.createElement('div');
+  div.style.cssText='width:100%;height:100%;background:linear-gradient(135deg,#0a2a1a,#1a4a3a);display:flex;align-items:center;justify-content:center;font-family:JetBrains Mono,monospace;color:#00ff88;font-size:5rem;font-weight:700;';
+  div.textContent='RH';
+  frame.appendChild(div);
+};
+</script>
+</body>
+</html>
